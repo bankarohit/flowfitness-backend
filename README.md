@@ -103,6 +103,45 @@ curl http://localhost:3000/health
 - **Security**: Runs as non-root user (`nodejs`)
 - **Health Check**: Built-in health check endpoint monitoring
 
+## AWS Deployment
+
+The application is configured for deployment to AWS ECS Fargate using GitHub Actions.
+
+### Deployment Workflows
+
+- **Staging Deployment** (`.github/workflows/deploy_staging.yml`): 
+  - Triggers on push to `develop` branch
+  - Deploys to ECS Fargate staging environment
+  - Image tag: `staging-{GITHUB_SHA}`
+
+- **Production Deployment** (`.github/workflows/deploy_production.yml`):
+  - Triggers on tags matching `v*` (e.g., `v1.0.0`)
+  - Deploys to ECS Fargate production environment
+  - Image tag: Tag name (e.g., `v1.0.0`)
+
+### AWS Resource Naming
+
+Recommended AWS resource names:
+
+- **ECR Repository**: `flowfitness-api`
+- **ECS Cluster**: `flowfitness-cluster`
+- **ECS Service (Staging)**: `flowfitness-api-staging-svc`
+- **ECS Service (Production)**: `flowfitness-api-production-svc`
+
+### Required GitHub Secrets
+
+Configure the following secrets in GitHub repository/environment settings:
+
+- `AWS_ROLE_ARN` - IAM role ARN for OIDC authentication
+- `AWS_REGION` - AWS region (e.g., `us-east-1`)
+- `ECR_REPOSITORY` - ECR repository name (`flowfitness-api`)
+- `ECS_CLUSTER` - ECS cluster name (`flowfitness-cluster`)
+- `ECS_SERVICE` - ECS service name (staging: `flowfitness-api-staging-svc`, production: `flowfitness-api-production-svc`)
+
+### Documentation
+
+For detailed AWS deployment setup instructions, see [docs/AWS_DEPLOYMENT.md](./docs/AWS_DEPLOYMENT.md).
+
 ## GitFlow Overview
 
 This project follows GitFlow branching strategy:
@@ -135,8 +174,8 @@ All checks must pass before a PR can be merged.
 ### Workflows
 
 - `.github/workflows/pr-checks.yml` - Runs on PRs to `main`/`develop`
-- `.github/workflows/staging-deploy.yml` - Deploys to staging on push to `develop`
-- `.github/workflows/production-deploy.yml` - Deploys to production on tag `v*`
+- `.github/workflows/deploy_staging.yml` - Deploys to staging on push to `develop` (ECS Fargate)
+- `.github/workflows/deploy_production.yml` - Deploys to production on tag `v*` (ECS Fargate)
 
 ## Project Structure
 
@@ -148,6 +187,11 @@ flowfitness-backend/
 │   ├── __tests__/     # Test files
 │   └── index.ts       # Entry point
 ├── dist/              # Compiled JavaScript (generated)
+├── docs/              # Documentation
+│   └── AWS_DEPLOYMENT.md
+├── ecs/               # ECS task definitions
+│   ├── taskdef-staging.json
+│   └── taskdef-prod.json
 ├── .dockerignore      # Docker ignore patterns
 ├── .eslintrc.js       # ESLint configuration
 ├── .prettierrc        # Prettier configuration
